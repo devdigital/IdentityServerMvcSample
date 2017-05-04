@@ -5,10 +5,12 @@ using Owin;
 
 namespace IdentityServerMvcSample.IdentityServer.Web
 {
-    using System.Collections.Generic;
+    using System;
+    using System.IO;
+    using System.Reflection;
+    using System.Security.Cryptography.X509Certificates;
 
     using IdentityServer3.Core.Configuration;
-    using IdentityServer3.Core.Services.InMemory;
 
     using Serilog;
 
@@ -23,15 +25,43 @@ namespace IdentityServerMvcSample.IdentityServer.Web
 
             var options = new IdentityServerOptions
             {
+                SiteName = "Example IdentityServer",
+                SigningCertificate = LoadCertificate(),
+
                 Factory = new IdentityServerServiceFactory()
                     .UseInMemoryClients(Clients.Get())
                     .UseInMemoryScopes(Scopes.Get())
-                    .UseInMemoryUsers(new List<InMemoryUser>()),
+                    .UseInMemoryUsers(Users.Get()),
 
                 RequireSsl = false
             };
 
             app.UseIdentityServer(options);
+        }
+
+        private static X509Certificate2 LoadCertificate()
+        {
+            var resource = GetResource(
+                typeof(Startup).Assembly, 
+                "IdentityServerMvcSample.IdentityServer.Web.idsrv3test.pfx");
+
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"bin\idsrv3test.pfx");
+            return new X509Certificate2(path, "idsrv3test");
+        }
+
+        private static byte[] GetResource(Assembly assembly, string resourceName)
+        {
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    return null;
+                }
+
+                var result = new byte[stream.Length];
+                stream.Read(result, 0, result.Length);
+                return result;
+            }
         }
     }
 }

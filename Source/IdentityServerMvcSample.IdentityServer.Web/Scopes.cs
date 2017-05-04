@@ -1,6 +1,7 @@
 ﻿namespace IdentityServerMvcSample.IdentityServer.Web
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     using IdentityServer3.Core.Models;
 
@@ -8,7 +9,8 @@
     {
         public static List<Scope> Get()
         {
-            return new List<Scope> { new Scope { Name = "api1" } };
+            return StandardScopes.All.Union(
+                new[] { new Scope { Name = "api1" } }).ToList();
         }
     }
 }
